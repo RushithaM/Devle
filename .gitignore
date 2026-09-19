@@ -1,0 +1,45 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Backend
+backend/.env
+backend/generated
+backend/prisma/content/challenges/*.json
+backend/prisma/content/topics.json
+backend/prisma/content/local/
+
+# Env files (local secrets)
+.env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+*.pem
+*.p12
+credentials.json
+
+# Local tooling / backups
+.claude/
+*.bak
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

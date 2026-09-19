@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devle
+    ports:
+      - "5432:5432"
+    volumes:
+      - devle-pg:/var/lib/postgresql/data
+      - ./backend/prisma/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    command: ["postgres", "-c", "fsync=off"]
+
+volumes:
+  devle-pg:

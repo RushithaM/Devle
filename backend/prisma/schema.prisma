@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum GameMode {
+  DAILY
+  PRACTICE
+}
+
+enum GameStatus {
+  PLAYING
+  WON
+  LOST
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  preference UserPreference?
+  streak     UserStreak?
+  statistics UserStatistics?
+  games      GameSession[]
+}
+
+/// The user's chosen difficulty (and optional favorite topic for practice
+/// shortcuts). Deliberately a single row per user, not a log — history that
+/// matters for future adaptive difficulty lives in UserTopicStatistic instead.
+model UserPreference {
+  userId     String     @id
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  difficulty Difficulty @default(MEDIUM)
+  topicId    String?
+  topic      Topic?     @relation(fields: [topicId], references: [id])
+  updatedAt  DateTime   @updatedAt
+}
+
+/// Static topic catalog (DSA, DBMS, ...). Seeded once; id is the stable slug
+/// already used throughout the original frontend (e.g. "system-design").
+model Topic {
+  id          String @id
+  name        String
+  shortName   String
+  description String
+  sortOrder   Int    @default(0)
+
+  challenges      Challenge[]
+  dailyChallenges DailyChallenge[]
+  preferences     UserPreference[]
+  topicStats      UserTopicStatistic[]
+}
+
+/// One authored question. isActive lets content be retired without deleting
+/// history that references it (DailyChallenge / GameSession rows).
+model Challenge {
+  id              String     @id @default(uuid())
+  topicId         String
+  topic           Topic      @relation(fields: [topicId], references: [id])
+  question        String
+  answer          String
+  difficulty      Difficulty
+  hint1           String
+  hint2           String
+  explanation     String
+  relatedConcepts String[]
+  interviewTip    String?
+  tags            String[]
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  dailyChallenges DailyChallenge[]
+  games           GameSession[]
+
+  @@index([topicId, difficulty, isActive])
+}
+
+/// The resolved answer to "which challenge is (date, topic, difficulty)?".
+/// Computed once on first request and cached here — every later request (by
+/// any user) and every GameSession for that day reads this same row, which is
+/// what makes the daily challenge identical for every user with that
+/// topic+difficulty on that date.
+model DailyChallenge {
+  id          String     @id @default(uuid())
+  date        DateTime   @db.Date
+  topicId     String
+  topic       Topic      @relation(fields: [topicId], references: [id])
+  difficulty  Difficulty
+  challengeId String
+  challenge   Challenge  @relation(fields: [challengeId], references: [id])
+  createdAt   DateTime   @default(now())
+
+  games GameSession[]
+
+  @@unique([date, topicId, difficulty])
+}
+
+/// One play-through of one challenge. Guesses are append-only children.
+/// `attempts` and `hintsUsed` are denormalized counters (also derivable from
+/// Guess rows) kept here so status checks don't need a join on every request.
+model GameSession {
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId      String
+  challenge        Challenge       @relation(fields: [challengeId], references: [id])
+  dailyChallengeId String?
+  dailyChallenge   DailyChallenge? @relation(fields: [dailyChallengeId], references: [id])
+  mode             GameMode
+  status           GameStatus      @default(PLAYING)
+  attempts         Int             @default(0)
+  maxAttempts      Int             @default(6)
+  hintsUsed        Int             @default(0)
+  startedAt        DateTime        @default(now())
+  completedAt      DateTime?
+
+  guesses Guess[]
+
+  // A user can only ever have one session per specific daily challenge instance
+  // (NULLs — practice sessions — are exempt from this constraint in Postgres).
+  @@unique([userId, dailyChallengeId])
+  @@index([userId, mode])
+}
+
+model Guess {
+  id            String      @id @default(uuid())
+  gameSessionId String
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  guess         String
+  result        Json
+  attemptNumber Int
+  createdAt     DateTime    @default(now())
+
+  @@index([gameSessionId])
+}
+
+/// Streak is derived state, not a log — see the streaks module for the
+/// (pure, unit-tested) rules that update it.
+model UserStreak {
+  userId            String    @id
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak     Int       @default(0)
+  bestStreak        Int       @default(0)
+  lastCompletedDate DateTime? @db.Date
+  updatedAt         DateTime  @updatedAt
+}
+
+/// App-wide totals, shown on the profile screen.
+model UserStatistics {
+  userId              String   @id
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gamesPlayed         Int      @default(0)
+  gamesWon            Int      @default(0)
+  totalAttemptsOnWins Int      @default(0)
+  totalHintsUsed      Int      @default(0)
+  updatedAt           DateTime @updatedAt
+
+  byTopic UserTopicStatistic[]
+}
+
+/// Per (topic, difficulty) breakdown. Not surfaced in the UI yet — this is
+/// the "prepare the architecture" piece for future adaptive difficulty
+/// recommendations ("you've mastered Easy DSA, ready for Medium?").
+model UserTopicStatistic {
+  id                  String         @id @default(uuid())
+  userStatisticsId    String
+  userStatistics      UserStatistics @relation(fields: [userStatisticsId], references: [userId], onDelete: Cascade)
+  topicId             String
+  topic               Topic          @relation(fields: [topicId], references: [id])
+  difficulty          Difficulty
+  gamesPlayed         Int            @default(0)
+  gamesWon            Int            @default(0)
+  totalAttemptsOnWins Int            @default(0)
+  totalHintsUsed      Int            @default(0)
+
+  @@unique([userStatisticsId, topicId, difficulty])
+}

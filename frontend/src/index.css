@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #edeff3;
+  --border: #e2e4ea;
+  --text: #14161c;
+  --text-dim: #6b7080;
+  --text-faint: #9297a6;
+
+  --accent: #c97e1b;
+  --accent-strong: #a8690f;
+  --accent-contrast: #ffffff;
+
+  --correct: #1d9a63;
+  --correct-contrast: #ffffff;
+  --present: #a3760a;
+  --present-contrast: #ffffff;
+  --absent: #d8dbe2;
+  --absent-contrast: #4b4f5c;
+
+  --danger: #d43f3f;
+
+  --shadow-card: 0 1px 2px rgba(20, 22, 28, 0.04), 0 8px 24px rgba(20, 22, 28, 0.06);
+}
+
+:root[data-theme="dark"] {
+  --bg: #12141c;
+  --surface: #1a1d27;
+  --surface-2: #20232f;
+  --border: #2c2f3d;
+  --text: #e9eaf0;
+  --text-dim: #9aa0ae;
+  --text-faint: #6a6f7f;
+
+  --accent: #ffb84d;
+  --accent-strong: #ffcb7a;
+  --accent-contrast: #191308;
+
+  --correct: #3dd68c;
+  --correct-contrast: #06241a;
+  --present: #ffc857;
+  --present-contrast: #3a2600;
+  --absent: #363a47;
+  --absent-contrast: #c3c7d1;
+
+  --danger: #ff6b6b;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-dim: var(--text-dim);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-correct: var(--correct);
+  --color-correct-contrast: var(--correct-contrast);
+  --color-present: var(--present);
+  --color-present-contrast: var(--present-contrast);
+  --color-absent: var(--absent);
+  --color-absent-contrast: var(--absent-contrast);
+  --color-danger: var(--danger);
+
+  --animate-flip: flip 0.5s ease forwards;
+  --animate-shake: shake 0.4s ease;
+  --animate-pop: pop 0.15s ease;
+  --animate-rise: rise 0.4s ease both;
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(4px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-8px);
+  }
+  40%,
+  60% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
